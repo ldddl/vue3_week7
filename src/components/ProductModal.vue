@@ -1,6 +1,6 @@
 <template>
- <!-- <div id="templateForProductModal" ref="modal" class="modal fade" tabindex="-1" aria-labelledby="productModalLabel" aria-hidden="true"> -->
-  <!-- <div class="modal-dialog modal-xl">
+ <div id="productModal" ref="modal" class="modal fade" tabindex="-1" aria-labelledby="productModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-xl">
     <div class="modal-content border-0">
       <div class="modal-header bg-dark text-white">
         <h5 id="productModalLabel" class="modal-title">
@@ -13,21 +13,15 @@
           <div class="col-sm-4">
             <div class="mb-2">
               <div class="mb-3">
-                <label for="imageUrl" class="form-label">輸入圖片網址</label> -->
-                <!-- img-fluid 為bootstrap 圖片樣式-->
-                <!-- <input type="text" class="form-control img-fluid" v-model="product.imageUrl"
+                <label for="imageUrl" class="form-label">輸入圖片網址</label>
+                <input type="text" class="form-control img-fluid" v-model="product.imageUrl"
                        placeholder="請輸入圖片連結" id="imageUrl">
               </div>
               <img class="img-fluid" :src="product.imageUrl" alt="">
             </div>
             <div class="md-3">
-              <h3>多圖設置</h3> -->
-              <!-- 判斷傳入值是否有陣列，不使用 .length 判斷是因為有可能傳入不為陣列，不是陣列也就沒有length -->
-              <!-- 新增圖片判斷
-                  1.透過陣列長度來判斷是否有第一個元素，沒有的話就新增一個， v-if="!tempProduct.imagesUrl.length"
-                  2.透過當前陣列位置判斷有無內容，有內容就產生第二個新增按鈕，當前陣列位置為陣列長度-1
-              -->
-              <!-- <div v-if="Array.isArray(product.imagesUrl)">
+              <h3>多圖設置</h3>
+              <div v-if="Array.isArray(product.imagesUrl)">
                 <template v-for="(item,key) in product.imagesUrl" :key="key + '66666'">
                   <label for="imageUrl" class="form-label">輸入圖片網址</label>
                   <input type="text" class="form-control img-fluid" v-model="product.imagesUrl[key]"
@@ -57,9 +51,6 @@
               <button class="btn btn-outline-danger btn-sm d-block w-100" @click="product.imagesUrl.pop()">
                 刪除圖片
               </button>
-            </div>
-            <div>
-
             </div>
           </div>
           <div class="col-sm-8">
@@ -124,40 +115,23 @@
         </button>
       </div>
     </div>
-  </div> -->
-  <div id="templateForProductModal" ref="modal" class="modal fade" tabindex="-1" aria-labelledby="productModalLabel" aria-hidden="true">
-    <!-- <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true"> -->
-      <div class="modal-dialog">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title" id="exampleModalLabel">Modal title</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-          </div>
-          <div class="modal-body">
-            ...
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-            <button type="button" class="btn btn-primary">Save changes</button>
-          </div>
-        </div>
-      </div>
-    <!-- </div> -->
+  </div>
  </div>
 </template>
 
 <script>
-// import { Modal } from 'bootstrap'
 import Modal from 'bootstrap/js/dist/modal'
 export default {
   data () {
     return {
-      product: {},
+      product: {
+        imagesUrl: [],
+        imgPreviewURL: ''
+      },
       modal: {}
     }
   },
   props: ['tempProduct', 'isNew'],
-  // template: '#templateForProductModal',
   watch: {
     tempProduct () {
       this.product = JSON.parse(JSON.stringify(this.tempProduct))
@@ -165,56 +139,50 @@ export default {
   },
   methods: {
     updateProducts () {
-      let url = `${process.env.VUE_APP_API}/api/${process.env.VUE_APP_PATH}/admin/product`
+      let url = `${process.env.VUE_APP_API}api/${process.env.VUE_APP_PATH}/admin/product`
       let method = 'post'
-      console.log(this.tempProduct)
+      console.log(this.product)
       console.log(this.isNew)
       if (!this.isNew) {
         // 編輯
-        console.log(this.tempProduct.id)
-        url = `${process.env.VUE_APP_API}/api/${process.env.VUE_APP_PATH}/admin/product/${this.tempProduct.id}`
+        console.log(this.product.id)
+        url = `${process.env.VUE_APP_API}api/${process.env.VUE_APP_PATH}/admin/product/${this.product.id}`
         method = 'put'
       } else {
         // 新增
-        console.log(this.tempProduct)
-        if (this.tempProduct.imagesUrl.length === 0) {
+        console.log(this.product)
+        if (this.product.imagesUrl.length === 0) {
           alert('請新增更多圖片')
           return 0
         }
       }
       // 需根據API文件格式傳遞資料，{ data: this.tempProduct }
-      console.log({ data: this.tempProduct })
-      this.$http[method](url, { data: this.tempProduct })
+      this.$http[method](url, { data: this.product })
         .then((result) => {
           console.log(result)
-          // this.getProducts(); // getProducts為外層方法，無法直接觸發
+          // this.getProducts(); // getProducts為外層方法，無法直接觸發，透過$emit()傳遞資料
           this.$emit('get-products')
           this.modal.hide()
         })
         .catch((err) => {
           let errMessage = ''
-          // console.log(err);
-          // console.log(err.data.message);
           err.data.message.forEach((item, i) => {
             errMessage += item
           })
-          // console.log(errMessage)
           alert(errMessage)
         })
     },
     openModal () {
       this.modal.show()
-    },
-    closeModal () {
-      this.modal.hide()
     }
   },
   mounted () {
     // console.log(this.$refs.modal)
     this.modal = new Modal(this.$refs.modal)
     // console.log(this.modal)
-    // this.modal.show()
     // this.openModal()
+    // console.log(this.product)
+    // console.log(this.tempProduct)
   }
 }
 </script>

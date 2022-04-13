@@ -1,6 +1,5 @@
 <template>
   <div class="container">
-    <!-- {{ products }} -->
     <div class="text-end mt-4">
       <button
         class="btn btn-primary"
@@ -55,78 +54,37 @@
     <!-- 將元件加入畫面  -->
     <!-- v-bind 綁定 內層元件pages，值為 外層元件pagination -->
     <!-- 觸發事件v-on 綁定 內層get-product，值為 外層getProducts -->
-    <!-- <pagination :pages="pagination" @get-product="getProducts"></pagination> -->
-  </div>
-  <div
-    id="productModal"
-    ref="productModal"
-    class="modal fade"
-    tabindex="-1"
-    aria-labelledby="productModalLabel"
-    aria-hidden="true"
-  >
-    <!-- product-modal 為全域註冊的內層元件 -->
-    <!-- v-bind綁定 內層元件temp-product 及 外層元件tempProduct  -->
-    <!-- v-on綁定 內層元件get-products 及 外層元件getProducts  -->
-    <product-modal
-      :temp-product="tempProduct"
-      @get-products="getProducts"
-      :is-new="isNew"
-    ></product-modal>
+    <pagination :pages="pagination" @get-product="getProducts"></pagination>
   </div>
 
-  <div
-    id="delProductModal"
+    <!-- v-bind綁定 內層元件temp-product 及 外層元件tempProduct  -->
+    <!-- v-on綁定 內層元件get-products 及 外層元件getProducts  -->
+  <product-modal
+    :temp-product="tempProduct"
+    @get-products="getProducts"
+    :is-new="isNew"
+    ref="productModal"
+  ></product-modal>
+
+  <delProductModal
     ref="delProductModal"
+    :temp-product="tempProduct"
     class="modal fade"
     tabindex="-1"
     aria-labelledby="delProductModalLabel"
     aria-hidden="true"
   >
-    <div class="modal-dialog">
-      <div class="modal-content border-0">
-        <div class="modal-header bg-danger text-white">
-          <h5 id="delProductModalLabel" class="modal-title">
-            <span>刪除產品</span>
-          </h5>
-          <button
-            type="button"
-            class="btn-close"
-            data-bs-dismiss="modal"
-            aria-label="Close"
-          ></button>
-        </div>
-        <div class="modal-body">
-          是否刪除
-          <strong class="text-danger">{{ tempProduct.title }}</strong>
-          商品(刪除後將無法恢復)。
-        </div>
-        <div class="modal-footer">
-          <button
-            type="button"
-            class="btn btn-outline-secondary"
-            data-bs-dismiss="modal"
-          >
-            取消
-          </button>
-          <button type="button" class="btn btn-danger" @click="deleteProduct()">
-            確認刪除
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
+  </delProductModal>
 </template>
 
 <script>
-// import { Modal } from 'bootstrap'
+// import Modal from 'bootstrap/js/dist/modal'
 import ProductModal from '@/components/ProductModal'
-// let modal = ''
-// let delProductModal = ''
+import pagination from '@/components/AdminPagination.vue'
+import delProductModal from '@/components/AdminDeleteModal.vue'
 
 export default {
-  // components: { pagination },
-  components: { ProductModal },
+  components: { ProductModal, pagination, delProductModal },
   data () {
     return {
       products: [],
@@ -156,11 +114,13 @@ export default {
     },
     getProducts (page = 1) {
     // 參數預設值 page = 1 ，用於分頁功能未取值時，顯示第一頁面
+      console.log(page)
       this.$http
         .get(`${process.env.VUE_APP_API}/api/${process.env.VUE_APP_PATH}/admin/products/?page=${page}`)
         .then((result) => {
           // console.log(result);
           console.log(result.data.products)
+          console.log(this.pagination)
           this.products = result.data.products
           this.pagination = result.data.pagination // 取得pagination
         })
@@ -172,12 +132,12 @@ export default {
     openModal (status, product) {
       // 以status區分新增及編輯按鈕
       if (status === 'isAdd') {
-        console.log(this.$refs)
-        this.$refs.productModal.openModal()
+        // console.log(this.$refs)
         // 新增
         this.tempProduct = {
           imagesUrl: [] // 利用陣列存放多圖
         }
+        this.$refs.productModal.openModal()
         // modal.show()
         this.isNew = true
       } else if (status === 'isEdit') {
@@ -186,28 +146,19 @@ export default {
         // this.tempProduct = product;
         this.tempProduct = JSON.parse(JSON.stringify(product))
         // modal.show()
+        this.$refs.productModal.openModal()
         this.isNew = false
       } else if (status === 'isDelete') {
         this.tempProduct = JSON.parse(JSON.stringify(product))
+        console.log(this.tempProduct)
         // delProductModal.show()
+        // this.$refs.delProductModal.show()
+        this.$refs.delProductModal.openModal()
       }
-    },
-    deleteProduct () {
-      const url = `${process.env.VUE_APP_API}/api/${process.env.VUE_APP_PATH}/admin/product/${this.tempProduct.id}`
-      this.$http
-        .delete(url)
-        .then((result) => {
-          console.log(result)
-          this.getProducts()
-          // delProductModal.hide()
-        })
-        .catch((err) => { console.log(err) })
     }
   },
   mounted () {
     this.checkLogin()
-    // modal = new Modal(document.querySelector('#productModal'))
-    // modal = new Modal(this.$refs.productModal.modal)
     // delProductModal = new Modal(
     //   document.querySelector('#delProductModal')
     // )
